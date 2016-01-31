@@ -1,11 +1,12 @@
 require 'rails_helper'
 
 RSpec.describe User, type: :model do
-  let(:user) { User.create!(name: "Bloccit User", email: "user@bloccit.com", password: "password") }
+  let(:user) { create(:user) }
 
   it { should have_many(:posts) }
   it { should have_many(:comments) }
   it { should have_many(:votes) }
+  it { is_expected.to have_many(:favorites) }
   it { should validate_presence_of(:name) }
   it { should validate_length_of(:name).is_at_least(1) }
 
@@ -89,6 +90,30 @@ RSpec.describe User, type: :model do
     it "should be an invalid user due to incorrectly formatted email address" do
       expect(user_with_invalid_email_format).to_not be_valid
     end
-
   end
+
+  describe "#favorite_for(post)" do
+    before do
+      topic = Topic.create!(name: RandomData.random_sentence, description: RandomData.random_paragraph)
+      @post = topic.posts.create!(title: RandomData.random_sentence, body: RandomData.random_paragraph, user: user)
+    end
+
+    it "returns `nil` if the user has not favorited the post" do
+      expect(user.favorite_for(@post)).to be_nil
+    end
+
+    it "returns the appropriate favorite if it exists" do
+      favorite = user.favorites.where(post: @post).create
+      expect(user.favorite_for(@post)).to eq(favorite)
+    end
+  end
+
+  #describe ".avatar_url" do
+  #  let(:known_user) { create(:user, email: "blochead@bloc.io") }
+  #
+  #  it "returns the proper Gravatar url for a known email entity" do
+  #    expected_gravatar = "http://gravatar.com/avatar/bb6d1172212c180cfbdb7039129d7b03.png?s=48"
+  #    expect(known_user.avatar_url(48)).to eq(expected_gravatar)
+  #  end
+  #end
 end
